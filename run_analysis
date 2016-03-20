@@ -1,0 +1,37 @@
+library(dplyr)
+
+train_data_X <- tbl_df(read.table("UCI HAR Dataset/train/X_train.txt"))
+train_data_Y <- tbl_df(read.table("UCI HAR Dataset/train/Y_train.txt"))
+train_data_subj <- tbl_df(read.table("UCI HAR Dataset/train/subject_train.txt"))
+
+test_data_X <- tbl_df(read.table("UCI HAR Dataset/test/X_test.txt"))
+test_data_Y <- tbl_df(read.table("UCI HAR Dataset/test/Y_test.txt"))
+test_data_subj <- tbl_df(read.table("UCI HAR Dataset/test/subject_test.txt"))
+
+features <- tbl_df(read.table("UCI HAR Dataset/features.txt"))
+
+activities <- tbl_df(read.table("UCI HAR Dataset/activity_labels.txt"))
+
+data_X <- bind_rows(train_data_X, test_data_X)
+
+ind_means_and_stddevs <- features[grep("mean\\(\\)|std\\(\\)", features[[2]]), ][[1]]
+
+data_X <- select(data_X, ind_means_and_stddevs)
+
+names(data_X) <- features[ind_means_and_stddevs, ][[2]]
+
+df <- bind_cols(
+    data_X
+    , bind_rows(train_data_Y, test_data_Y) %>% rename(ACTIVITY_ID = V1)
+    , bind_rows(train_data_subj, test_data_subj) %>% rename(SUBJECT_ID = V1)
+)
+
+names(activities) <- c("ACTIVITY_ID", "ACTIVITY")
+
+df <- inner_join(df, activities) %>% select(-ACTIVITY_ID)
+
+df2 <- df %>% 
+    group_by(SUBJECT_ID, ACTIVITY) %>%
+    summarize_each(funs(mean))
+
+write.table(df2, "result.txt")
