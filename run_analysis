@@ -34,4 +34,4 @@ df2 <- df %>%
     group_by(SUBJECT_ID, ACTIVITY) %>%
     summarize_each(funs(mean))
 
-write.table(df2, "result.txt")
+write.table(df2, "result.txt", row.name=FALSE)
